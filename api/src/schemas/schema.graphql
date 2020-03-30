@@ -1,0 +1,33 @@
+type Query {
+  getUsers: [User]!
+  getLocations: [Location]!
+  getUserMostRecentLocation(id: Int!): Location!
+  getAllUsersAtLocationInTimeRange(location: Int!, start: String!, end: String!): [User]!
+}
+
+type Mutation {
+    addUser(user: newUserInput): User
+    addLocation(latitude: Float!, longitude: Float!, address: String, capacity: Int): Location
+}
+
+input newUserInput {
+    firstName: String!
+    lastName: String!
+    sin: Int!
+}
+
+type User {
+    id: ID!
+    firstName: String!
+    lastName: String!
+    sin: Int!
+    mostRecentLocation: Location
+}
+
+type Location {
+    id: ID!
+    latitude: Float!
+    longitude: Float!
+    capacity: Int
+    address: String
+}
