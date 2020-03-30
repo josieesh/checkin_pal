@@ -6,6 +6,7 @@ import ApolloClient from 'apollo-boost';
 import { gql } from "apollo-boost";
 import { useQuery } from '@apollo/react-hooks';
 import { ApolloProvider } from '@apollo/react-hooks';
+import { UsePositionDemo } from "./geolocation";
 
 
 const client = new ApolloClient({
@@ -57,6 +58,7 @@ const App = () => (
 ReactDOM.render(
   <React.StrictMode>
     <App />
+    <UsePositionDemo />
   </React.StrictMode>,
   document.getElementById('root')
 );
