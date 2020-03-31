@@ -2,12 +2,9 @@
   "name": "checkin_pal",
   "version": "1.0.0",
   "description": "Covid-19 Hackathon project",
-  "main": "dist/server.js",
+  "main": "src/server.js",
   "scripts": {
-    "start": "node 'dist/server.js'",
-    "build": "rm -rf dist && tsc -p . && ncp src/schemas dist/schemas",
-    "start:dev": "npm run build:dev",
-    "build:dev": "nodemon 'src/server.ts' --exec 'ts-node' src/server.ts -e ts,graphql"
+    "dev": "nodemon server.js"
   },
   "repository": {
     "type": "git",
@@ -23,19 +20,25 @@
   },
   "homepage": "https://github.com/josieesh/checkin_pal#readme",
   "dependencies": {
+    "@okta/oidc-middleware": "^1.0.2",
     "@types/bluebird": "^3.5.30",
     "@types/validator": "^12.0.1",
     "apollo-server-express": "^2.11.0",
+    "axios": "^0.19.2",
     "body-parser": "^1.19.0",
     "compression": "^1.7.4",
+    "cookie-session": "^1.4.0",
     "cors": "^2.8.5",
     "dotenv": "^8.2.0",
     "epilogue": "^0.7.1",
     "express": "^4.17.1",
+    "express-session": "^1.15.6",
     "graphql": "^14.6.0",
     "http": "0.0.1-security",
+    "material-ui": "^0.20.2",
     "ncp": "^2.0.0",
     "pg": "^8.0.0",
+    "react-tap-event-plugin": "^3.0.3",
     "sequelize": "^5.21.5",
     "sequelize-cli": "^5.5.1"
   },
