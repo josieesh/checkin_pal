@@ -5,6 +5,8 @@ import { createServer } from 'http';
 import compression from 'compression';
 import cors from 'cors';
 import schema from './schema';
+import initializeDatabase from './data_access/queries';
+
 const app = express();
 const server = new ApolloServer({
   schema,
@@ -16,7 +18,10 @@ server.applyMiddleware({ app, path: '/graphql' });
 const httpServer = createServer(app);
 httpServer.listen(
   { port: 4000 },
-  (): void => console.log(`\n🚀      GraphQL is now running on http://localhost:4000/graphql`));
+  (): void => {
+    //await initializeDatabase(app);
+    console.log(`\n🚀      GraphQL is now running on http://localhost:4000/graphql`)
+  });
 
 // import "reflect-metadata";
 
