@@ -1,6 +1,4 @@
-require('dotenv').config()
-
-console.log(process.env.DEV_DATABASE_URL)
+require('dotenv').config({ path: '../../.env' })
 
 module.exports = {
   development: {
