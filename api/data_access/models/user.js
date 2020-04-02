@@ -17,18 +17,6 @@ module.exports = (sequelize, DataTypes) => {
     },
     password: DataTypes.STRING,
   }, {
-    freezeTableName: true,
-    instanceMethods: {
-      comparePassword : function(candidatePassword, cb) {
-          bcrypt.compare(candidatePassword, this.getDataValue('password'), function(err, isMatch) {
-              if(err) return cb(err);
-              cb(null, isMatch);
-          });
-      },
-      getFullname: function() {
-          return [this.firstname, this.lastname].join(' ');
-      }
-    },
     hooks: {
         beforeCreate: async function(user, next) {
           const password = user.password
@@ -41,28 +29,17 @@ module.exports = (sequelize, DataTypes) => {
           })
           user.password = hashedPassword;
         }
-    }
+    },
+    freezeTableName: true
   }
   );
-  // User.pre('create', function(next) {
-  //   // Check if document is new or a new password has been set
-  //   if (this.isNew || this.isModified('password')) {
-  //     // Saving reference to this because of changing scopes
-  //     const document = this;
-  //     bcrypt.hash(document.password, saltRounds,
-  //       function(err, hashedPassword) {
-  //       if (err) {
-  //         next(err);
-  //       }
-  //       else {
-  //         document.password = hashedPassword;
-  //         next();
-  //       }
-  //     });
-  //   } else {
-  //     next();
-  //   }
-  // });
+  User.prototype.comparePassword = function (candidatePassword, cb) {
+    bcrypt.compare(candidatePassword, this.getDataValue('password'), function(err, isMatch) {
+      if(err) return cb(err);
+      cb(null, isMatch);
+    });
+  }
+
   User.associate = function(models) {
     // associations can be defined here
     User.belongsToMany(models.location, { through: 'user_location' });

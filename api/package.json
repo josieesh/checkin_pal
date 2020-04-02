@@ -36,6 +36,7 @@
     "express-session": "^1.15.6",
     "graphql": "^14.6.0",
     "http": "0.0.1-security",
+    "jsonwebtoken": "^8.5.1",
     "material-ui": "^0.20.2",
     "ncp": "^2.0.0",
     "pg": "^8.0.0",
