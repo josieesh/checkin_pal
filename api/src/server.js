@@ -87,15 +87,6 @@ app.post('/register', function(req, res) {
         }
         
       });
-
-    // sequelize.sync().then(function () {
-    //     return feed.create({
-    //         subscriber_id: 5008,
-    //         activity_id : 116
-    //     });
-    // }).then(function (jane) {
-    //     res.sendStatus(jane);
-    // });
 });
 
 

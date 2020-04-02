@@ -30,19 +30,16 @@ module.exports = (sequelize, DataTypes) => {
       }
     },
     hooks: {
-        beforeCreate: function(user, next) {
-          console.log("BEFORE CREATE HOOK");
-          // Check if document is new or a new password has been se
-          bcrypt.hash(user.password, saltRounds,
-            function(err, hashedPassword) {
-            if (err) {
-              console.log("ERROR");
-              console.log(err);
-            }
-            else {
-              user.password = hashedPassword;
-            }
-          });
+        beforeCreate: async function(user, next) {
+          const password = user.password
+
+          const hashedPassword = await new Promise((resolve, reject) => {
+            bcrypt.hash(password, saltRounds, function(err, hash) {
+              if (err) reject(err)
+              resolve(hash)
+            });
+          })
+          user.password = hashedPassword;
         }
     }
   }
