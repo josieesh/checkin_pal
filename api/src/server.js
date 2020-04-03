@@ -9,14 +9,11 @@ require('dotenv').config({ path: '../.env' });
 var apollo_server_express_1 = require("apollo-server-express");
 var graphql_depth_limit_1 = __importDefault(require("graphql-depth-limit"));
 var http_1 = require("http");
-
 var schema_1 = __importDefault(require("./schema"));
 
 const app = require('./app');
-
-
-
-
+const cookieParser = require('cookie-parser');
+const withAuth = require('./auth');
 
 
 var server = new apollo_server_express_1.ApolloServer({
@@ -24,7 +21,7 @@ var server = new apollo_server_express_1.ApolloServer({
     validationRules: [graphql_depth_limit_1.default(7)],
 });
 
-server.applyMiddleware({ app: app, path: '/graphql' });
+server.applyMiddleware({ app: app });
 var httpServer = http_1.createServer(app);
 httpServer.listen({ port: 4000 }, function () {
     console.log("\n\uD83D\uDE80      GraphQL is now running on http://localhost:4000/graphql");
