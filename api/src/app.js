@@ -14,6 +14,9 @@ const withAuth = require('./auth');
 const path = require("path");
 const express = require("express");
 const cookieParser = require('cookie-parser');
+const redis = require('redis');
+const redisStore = require('connect-redis')(session);
+const redisClient = redis.createClient();
 
 // secret for token signing
 const secret = process.env.SECRET;
@@ -33,6 +36,14 @@ app.set("views", path.join(__dirname, "views"));
 app.set("view engine", "pug");
 app.use(express.static(path.join(__dirname, "public")));
 
+app.use(session({
+  secret: process.env.SECRET,
+  // create new redis store.
+  store: new redisStore({ host: 'localhost', port: 6379, client: redisClient, ttl :  260}),
+  saveUninitialized: false,
+  resave: false
+}));
+
 
 
 
@@ -47,10 +58,6 @@ app.get("/login", (req, res) => {
 // check that a given token is valid
 app.get('/checkToken', withAuth, function(req, res) {
   res.sendStatus(200);
-});
-
-app.get('/api/secret', withAuth, function(req, res) {
-  res.send('The password is potato');
 });
 
 app.get("/", function(req, res) {
@@ -117,19 +124,20 @@ app.post('/login', async function(req, res) {
   const { username, password } = req.body;
   const user = await User.findOne(
     { where: { username: username },
-    attributes: ['first_name', 'last_name', 'sin', 'username', 'password'] 
+    attributes: ['first_name', 'last_name', 'sin', 'username','password'] 
   }).catch(function(err) {
     console.log(err);
   });
   if (!user) {
     res.status(401)
       .json({
-        error: 'Incorrect email or password'
+        error: 'User does not exist, please register.'
       });
   }
   else {
     user.comparePassword(password, function(err, same) {
       if (err) {
+        console.log(err);
         res.status(500)
           .json({
             error: 'Internal error please try again'
@@ -140,18 +148,26 @@ app.post('/login', async function(req, res) {
             error: 'Incorrect email or password'
         });
       } else {
-        // Issue token
-        const payload = { username };
-        const token = jwt.sign(payload, secret, {
-          expiresIn: '1h'
-        });
-        res.cookie('token', token, { httpOnly: true/*, secure: true*/ }); // need to comment this out while debugging
-          //.sendStatus(200);
+        // store session data
+        req.session.key = {
+          first_name: user.first_name,
+          last_name: user.last_name,
+          sin: user.sin,
+          username: user.username
+        };
         res.redirect(302, '/user');
       }
     });
   }
 });
 
+app.get('/logout', function(req,res) {
+  if(req.session.key) {
+    req.session.destroy(function() {
+      res.redirect('/');
+    })
+  }
+  else res.redirect('/');
+})
 
 module.exports = app;

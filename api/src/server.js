@@ -24,5 +24,5 @@ var server = new apollo_server_express_1.ApolloServer({
 server.applyMiddleware({ app: app });
 var httpServer = http_1.createServer(app);
 httpServer.listen({ port: 4000 }, function () {
-    console.log("\n\uD83D\uDE80      GraphQL is now running on http://localhost:4000/graphql");
+    console.log("\n\uD83D\uDE80      App is now running on port 4000");
 });
