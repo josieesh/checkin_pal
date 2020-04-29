@@ -5,19 +5,20 @@ require('dotenv').config({ path: '../.env' });
 
 // Import our User schema
 const User = require("../data_access/models")["user"];
+const Location = require("../data_access/models")["location"];
+const UserLocation = require("../data_access/models")["user_location"];
 const Sequelize = require("sequelize");
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
-const withAuth = require('./auth');
+const auth = require('./helpers/auth');
 const path = require("path");
 const cookieParser = require('cookie-parser');
 const redis = require('redis');
 const redisStore = require('connect-redis')(session);
 const redisClient = redis.createClient();
+const requestValidators = require('./helpers/requestSchemaValidators');
 
-// secret for token signing
-const secret = process.env.SECRET;
 app.use(cookieParser());
 
 // support parsing of application/json type post data
@@ -49,40 +50,51 @@ app.use(session({
 ***************/
 
 // check that a given JWtoken is valid (for client auth)
-app.get('/checkToken', withAuth, function(req, res) {
+app.get('/checkToken', auth.withAuth, function(req, res) {
   res.sendStatus(200);
 });
 
-app.get("/", function(req, res) {
-  res.render("index", { title: "Home" });
-});
+app.post("/checkin", auth.checkSession, requestValidators.validateCheckinRequest, async function(req, res) {
+  longitude = req.body.lng
+  latitude = req.body.lat
+  var location = await Location.findOne(
+    { 
+      where: { latitude: latitude, longitude: longitude },
+      attributes: ["id"]
+      },
+  ).catch(function(error) {
+    console.log(error)
+  });
 
-app.post("/checkin", async function(req, res) {
-  if(!req.session.key) {
-    res.status(403).send();  
-  }
-  else {
-    // Accept location coordinates from client and enter new data into db
-    // TODO
-    console.log("INSIDE CHECKIN")
-    console.log(req.body);
-    res.status(201).send();
+  if (!location) {
+    location = await Location.create({
+      longitude: longitude,
+      latitude: latitude
+    }).then(function(newLocation) {
+      return newLocation;
+    }).catch(async function(err) {
+      console.log(err)
+      res.status(500).send("There was a problem checking in.")
+    });
   }
   
+  // create new entry in userLocation
+  await UserLocation.create({
+    userId: req.session.key["id"],
+    locationId: location.id
+  }).catch(function(error) {
+    console.log(error)
+    res.status(500).send("There was a problem checking into this location.")
+  })
+  
+  res.status(201).send();
 })
 
-app.get("/user", async function(req, res) {
-  // make sure user is logged in, check the redis cache
-  if(!req.session.key) {
-    res.status(403).send();  
-  }
-  else {
-    const firstName = req.session.key["first_name"];
-    const lastName = req.session.key["last_name"];
-    const sin = req.session.key["sin"];
-    res.status(200).json({"first_name": firstName, "last_name": lastName, "sin": sin});
-  }
-  
+app.get("/user", auth.checkSession, async function(req, res) {
+  const firstName = req.session.key["first_name"];
+  const lastName = req.session.key["last_name"];
+  const sin = req.session.key["sin"];
+  res.status(200).json({"first_name": firstName, "last_name": lastName, "sin": sin});
 });
 
 // POST route to register a user
@@ -121,7 +133,7 @@ app.post('/login', async function(req, res) {
   const { username, password } = req.body;
   const user = await User.findOne(
     { where: { username: username },
-    attributes: ['first_name', 'last_name', 'sin', 'username','password'] 
+    attributes: ['id', 'first_name', 'last_name', 'sin', 'username','password'] 
   }).catch(function(err) {
     console.log(err);
   });
@@ -161,11 +173,9 @@ app.post('/login', async function(req, res) {
 
 app.get('/logout', function(req,res) {
   if(req.session.key) {
-    req.session.destroy(function() {
-      res.status(200).send();
-    })
+    req.session.destroy()
   }
-  else res.status(500).send();
+  res.status(200).send();
 })
 
 module.exports = app;

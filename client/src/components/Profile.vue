@@ -6,6 +6,8 @@
             <button v-on:click="checkin">Check-in</button>
             <button v-on:click="logout">Logout</button>    
         </div> 
+        <p style="color:green" v-if="checkinSuccess">Successful check-in!</p>
+        <p style="color:red" v-if="checkinFailure">Something went wrong with the check-in. Try again later.</p>
     </div>
 </template>
 <script>
@@ -16,7 +18,9 @@
     export default {    
         name: "Profile",    
         data() {    
-            return {    
+            return {  
+                checkinSuccess: false,  
+                checkinFailure: false,
                 user: {    
                     first_name: "",
                     last_name: ""    
@@ -50,7 +54,17 @@
                 getLocation()
                     .then((position) => {
                         this.$http.post("/checkin", {lng: position.coords.longitude, lat: position.coords.latitude})
+                        .then((response) => {
+                            if (response.status ===201) {
+                                this.$set(this, "checkinSuccess", true)
+                            }
+                        })
+                        .catch((e) => {
+                            this.$set(this, "checkinFailure", true)
+                            console.log(e)
+                        })
                     }).catch((e) => {
+                        this.$set(this, "checkinFailure", true)
                         console.log(e);
                     })
             }

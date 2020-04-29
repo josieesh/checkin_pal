@@ -11,7 +11,6 @@ var schema_1 = __importDefault(require("./schema"));
 
 const app = require('./app');
 const cookieParser = require('cookie-parser');
-const withAuth = require('./auth');
 
 
 var httpServer = http_1.createServer(app);

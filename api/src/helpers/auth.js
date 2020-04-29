@@ -24,4 +24,11 @@ const withAuth = function(req, res, next) {
     }
   }  
 }
-module.exports = withAuth;
+
+const checkSession = function(req, res, next) {
+  if(!req.session.key) {
+    res.status(403).send();  
+  }
+  next()
+}
+module.exports = { withAuth, checkSession };
