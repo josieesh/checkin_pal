@@ -1,7 +1,6 @@
 var express_1 = __importDefault(require("express"));
 var app = express_1.default();
 var compression_1 = __importDefault(require("compression"));
-var cors_1 = __importDefault(require("cors"));
 var session = require('express-session');
 require('dotenv').config({ path: '../.env' });
 
@@ -10,6 +9,7 @@ const User = require("../data_access/models")["user"];
 const Sequelize = require("sequelize");
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
+const cors = require('cors');
 const withAuth = require('./auth');
 const path = require("path");
 const express = require("express");
@@ -17,11 +17,10 @@ const cookieParser = require('cookie-parser');
 const redis = require('redis');
 const redisStore = require('connect-redis')(session);
 const redisClient = redis.createClient();
+const getLocation = require("./helpers/location");
 
 // secret for token signing
 const secret = process.env.SECRET;
-
-app.use('*', cors_1.default());
 app.use(compression_1.default());
 app.use(cookieParser());
 
@@ -31,10 +30,12 @@ app.use(bodyParser.json());
 //support parsing of application/x-www-form-urlencoded post data
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// views folder and engine conf
-app.set("views", path.join(__dirname, "views"));
-app.set("view engine", "pug");
 app.use(express.static(path.join(__dirname, "public")));
+
+app.use(cors({
+  origin: process.env.ORIGIN,
+  credentials: true
+}));
 
 app.use(session({
   secret: process.env.SECRET,
@@ -51,11 +52,7 @@ app.use(session({
 **** ROUTES ****
 ***************/
 
-app.get("/login", (req, res) => {
-  res.render("login", { title: "Login" });
-});
-
-// check that a given token is valid
+// check that a given JWtoken is valid (for client auth)
 app.get('/checkToken', withAuth, function(req, res) {
   res.sendStatus(200);
 });
@@ -64,27 +61,22 @@ app.get("/", function(req, res) {
   res.render("index", { title: "Home" });
 });
 
-app.get("/checkin", withAuth, function(req, res) {
+app.get("/checkin", function(req, res) {
   // Snapshot position request.
+  result = getLocation();
   res.render("checkin", {title: "Check-In"});
-  console.log(coords);
 })
 
-app.get("/user", withAuth, async function(req, res) {
-  // get the user's info
-  const user = await User.findOne(
-    { where: {username: req.username } }
-  ).catch(function(err) {
-    console.log(err);
-  });
-  if(!user) {
-    // at this stage, the user should be authenticated and should exist, so if we dont find the user, something went horribly wrong
-    res.status(500).json({ error: "Something went wrong!" });  
+app.get("/user", async function(req, res) {
+  // make sure user is logged in, check the redis cache
+  if(!req.session.key) {
+    res.status(403).send();  
   }
   else {
-    const firstName = user.first_name;
-    const lastName = user.last_name;
-    res.render("user", { title: "Profile", userProfile: { firstName: firstName, lastName: lastName } });
+    const firstName = req.session.key["first_name"];
+    const lastName = req.session.key["last_name"];
+    const sin = req.session.key["sin"];
+    res.status(200).json({"first_name": firstName, "last_name": lastName, "sin": sin});
   }
   
 });
@@ -92,26 +84,27 @@ app.get("/user", withAuth, async function(req, res) {
 // POST route to register a user
 app.post('/register', function(req, res) {
   const { username, password, first_name, last_name, sin } = req.body;
-  const user = User.create({ 
+  User.create({ 
       first_name: first_name, 
       last_name: last_name,
       username: username, 
       password: password,
       sin: sin
-    }).then(function(item){
-        res.json({
-          "New user" : {
-              "First name": first_name,
-              "Last name": last_name,
-              "Username": username,
-              "SIN": sin
-          }
-        });
+    }).then(function(user){
+        // store session data
+        req.session.key = {
+          first_name: user.first_name,
+          last_name: user.last_name,
+          sin: user.sin,
+          username: user.username
+        };
+        res.status(201).send();
       }).catch(function (err) {
         if (err instanceof Sequelize.UniqueConstraintError) {
             res.status(500).send(err.errors[0].message);
           }
         else{
+            console.log(err);
             res.status(500)
             .send("Error registering new user please try again.");
         }
@@ -145,7 +138,7 @@ app.post('/login', async function(req, res) {
       } else if (!same) {
         res.status(401)
           .json({
-            error: 'Incorrect email or password'
+            error: 'Incorrect username or password'
         });
       } else {
         // store session data
@@ -155,7 +148,7 @@ app.post('/login', async function(req, res) {
           sin: user.sin,
           username: user.username
         };
-        res.redirect(302, '/user');
+        res.status(200).send();
       }
     });
   }
