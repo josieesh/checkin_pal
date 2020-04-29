@@ -1,6 +1,5 @@
-var express_1 = __importDefault(require("express"));
-var app = express_1.default();
-var compression_1 = __importDefault(require("compression"));
+const express = require('express')
+var app = express()
 var session = require('express-session');
 require('dotenv').config({ path: '../.env' });
 
@@ -12,16 +11,13 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const withAuth = require('./auth');
 const path = require("path");
-const express = require("express");
 const cookieParser = require('cookie-parser');
 const redis = require('redis');
 const redisStore = require('connect-redis')(session);
 const redisClient = redis.createClient();
-const getLocation = require("./helpers/location");
 
 // secret for token signing
 const secret = process.env.SECRET;
-app.use(compression_1.default());
 app.use(cookieParser());
 
 // support parsing of application/json type post data
@@ -61,10 +57,18 @@ app.get("/", function(req, res) {
   res.render("index", { title: "Home" });
 });
 
-app.get("/checkin", function(req, res) {
-  // Snapshot position request.
-  result = getLocation();
-  res.render("checkin", {title: "Check-In"});
+app.post("/checkin", async function(req, res) {
+  if(!req.session.key) {
+    res.status(403).send();  
+  }
+  else {
+    // Accept location coordinates from client and enter new data into db
+    // TODO
+    console.log("INSIDE CHECKIN")
+    console.log(req.body);
+    res.status(201).send();
+  }
+  
 })
 
 app.get("/user", async function(req, res) {
@@ -143,6 +147,7 @@ app.post('/login', async function(req, res) {
       } else {
         // store session data
         req.session.key = {
+          id: user.id,
           first_name: user.first_name,
           last_name: user.last_name,
           sin: user.sin,
@@ -157,10 +162,10 @@ app.post('/login', async function(req, res) {
 app.get('/logout', function(req,res) {
   if(req.session.key) {
     req.session.destroy(function() {
-      res.redirect('/');
+      res.status(200).send();
     })
   }
-  else res.redirect('/');
+  else res.status(500).send();
 })
 
 module.exports = app;

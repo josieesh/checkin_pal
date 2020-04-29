@@ -12,23 +12,14 @@
             <input type="text" v-model="form.lastName" name="lastName" placeholder="Last name"/><br>  
             <input type="text" v-model="form.username" name="username" placeholder="username"/><br>  
             <input type="text" v-model="form.sin" name="sin" placeholder="Social Insurance Number"/><br>  
-            <input v-model="form.password" name="password" type="password" placeholder="Password">
-            <input v-model="form.confirmPassword" name="confirmPassword" type="password" placeholder="Confirm password">
+            <input v-model="form.password" name="password" type="password" placeholder="Password"><br>
+            <input v-model="form.confirmPassword" name="confirmPassword" type="password" placeholder="Confirm password"><br>
             <input type="submit" value="Register" /> 
-
-            
-
-            <!-- Errors
-
-            <div class="alert alert-danger" v-show="errors.any()">
-              <div v-if="errors.has('password')">
-                {{ errors.first('password') }}
-              </div>
-              <div v-if="errors.has('password_confirmation')">
-                {{ errors.first('password_confirmation') }}
-              </div>
-          </div> -->
-        </form>    
+        </form>  
+        <p>
+          Already have an account?  
+        <router-link to="/login" tag="button">Login</router-link>
+        </p>
     </div>
 </template>
 
@@ -56,7 +47,6 @@
                 try {
                   // format body
                   let data = formatRegistrationBody(this.form)
-                  console.log(data);
                   setTimeout(4000);
                   this.$http.post("/register", data)    
                       .then((response) => {
