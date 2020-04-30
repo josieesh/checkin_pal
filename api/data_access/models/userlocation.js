@@ -11,7 +11,8 @@ module.exports = (sequelize, DataTypes) => {
     timestamps: false
   });
   UserLocation.associate = function(models) {
-    // associations can be defined here
+    UserLocation.belongsTo(models.user);
+    UserLocation.belongsTo(models.location);
   };
   return UserLocation;
 };

@@ -54,6 +54,29 @@ app.get('/checkToken', auth.withAuth, function(req, res) {
   res.sendStatus(200);
 });
 
+// todo: add query parameter to specify number of locations to fetch
+app.get('/places', auth.checkSession, async function(req, res) {
+  const places = await UserLocation.findAll({ 
+    where: { userId: req.session.key["id"] },
+    limit: 20,
+    order: [['timestamp','DESC']],
+    include: [Location]
+  }).catch(function(error) {
+    console.log(error);
+  });
+  var response = []
+  places.forEach(place => {
+    response.push({
+      timestamp: place.timestamp,
+      latitude: place.location.latitude,
+      longitude: place.location.longitude,
+      address: place.location.address})
+  });
+
+  res.status(200).json({places: response})
+
+});
+
 app.post("/checkin", auth.checkSession, requestValidators.validateCheckinRequest, async function(req, res) {
   longitude = req.body.lng
   latitude = req.body.lat
@@ -88,7 +111,7 @@ app.post("/checkin", auth.checkSession, requestValidators.validateCheckinRequest
   })
   
   res.status(201).send();
-})
+});
 
 app.get("/user", auth.checkSession, async function(req, res) {
   const firstName = req.session.key["first_name"];
