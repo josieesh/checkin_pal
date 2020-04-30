@@ -1,27 +1,24 @@
-var express_1 = __importDefault(require("express"));
-var app = express_1.default();
-var compression_1 = __importDefault(require("compression"));
+const express = require('express')
+var app = express()
 var session = require('express-session');
 require('dotenv').config({ path: '../.env' });
 
 // Import our User schema
 const User = require("../data_access/models")["user"];
+const Location = require("../data_access/models")["location"];
+const UserLocation = require("../data_access/models")["user_location"];
 const Sequelize = require("sequelize");
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
-const withAuth = require('./auth');
+const auth = require('./helpers/auth');
 const path = require("path");
-const express = require("express");
 const cookieParser = require('cookie-parser');
 const redis = require('redis');
 const redisStore = require('connect-redis')(session);
 const redisClient = redis.createClient();
-const getLocation = require("./helpers/location");
+const requestValidators = require('./helpers/requestSchemaValidators');
 
-// secret for token signing
-const secret = process.env.SECRET;
-app.use(compression_1.default());
 app.use(cookieParser());
 
 // support parsing of application/json type post data
@@ -53,32 +50,74 @@ app.use(session({
 ***************/
 
 // check that a given JWtoken is valid (for client auth)
-app.get('/checkToken', withAuth, function(req, res) {
+app.get('/checkToken', auth.withAuth, function(req, res) {
   res.sendStatus(200);
 });
 
-app.get("/", function(req, res) {
-  res.render("index", { title: "Home" });
+// todo: add query parameter to specify number of locations to fetch
+app.get('/places', auth.checkSession, async function(req, res) {
+  const places = await UserLocation.findAll({ 
+    where: { userId: req.session.key["id"] },
+    limit: 20,
+    order: [['timestamp','DESC']],
+    include: [Location]
+  }).catch(function(error) {
+    console.log(error);
+  });
+  var response = []
+  places.forEach(place => {
+    response.push({
+      timestamp: place.timestamp,
+      latitude: place.location.latitude,
+      longitude: place.location.longitude,
+      address: place.location.address})
+  });
+
+  res.status(200).json({places: response})
+
 });
 
-app.get("/checkin", function(req, res) {
-  // Snapshot position request.
-  result = getLocation();
-  res.render("checkin", {title: "Check-In"});
-})
+app.post("/checkin", auth.checkSession, requestValidators.validateCheckinRequest, async function(req, res) {
+  longitude = req.body.lng
+  latitude = req.body.lat
+  var location = await Location.findOne(
+    { 
+      where: { latitude: latitude, longitude: longitude },
+      attributes: ["id"]
+      },
+  ).catch(function(error) {
+    console.log(error)
+  });
 
-app.get("/user", async function(req, res) {
-  // make sure user is logged in, check the redis cache
-  if(!req.session.key) {
-    res.status(403).send();  
-  }
-  else {
-    const firstName = req.session.key["first_name"];
-    const lastName = req.session.key["last_name"];
-    const sin = req.session.key["sin"];
-    res.status(200).json({"first_name": firstName, "last_name": lastName, "sin": sin});
+  if (!location) {
+    location = await Location.create({
+      longitude: longitude,
+      latitude: latitude
+    }).then(function(newLocation) {
+      return newLocation;
+    }).catch(async function(err) {
+      console.log(err)
+      res.status(500).send("There was a problem checking in.")
+    });
   }
   
+  // create new entry in userLocation
+  await UserLocation.create({
+    userId: req.session.key["id"],
+    locationId: location.id
+  }).catch(function(error) {
+    console.log(error)
+    res.status(500).send("There was a problem checking into this location.")
+  })
+  
+  res.status(201).send();
+});
+
+app.get("/user", auth.checkSession, async function(req, res) {
+  const firstName = req.session.key["first_name"];
+  const lastName = req.session.key["last_name"];
+  const sin = req.session.key["sin"];
+  res.status(200).json({"first_name": firstName, "last_name": lastName, "sin": sin});
 });
 
 // POST route to register a user
@@ -117,7 +156,7 @@ app.post('/login', async function(req, res) {
   const { username, password } = req.body;
   const user = await User.findOne(
     { where: { username: username },
-    attributes: ['first_name', 'last_name', 'sin', 'username','password'] 
+    attributes: ['id', 'first_name', 'last_name', 'sin', 'username','password'] 
   }).catch(function(err) {
     console.log(err);
   });
@@ -143,6 +182,7 @@ app.post('/login', async function(req, res) {
       } else {
         // store session data
         req.session.key = {
+          id: user.id,
           first_name: user.first_name,
           last_name: user.last_name,
           sin: user.sin,
@@ -156,11 +196,9 @@ app.post('/login', async function(req, res) {
 
 app.get('/logout', function(req,res) {
   if(req.session.key) {
-    req.session.destroy(function() {
-      res.redirect('/');
-    })
+    req.session.destroy()
   }
-  else res.redirect('/');
+  res.status(200).send();
 })
 
 module.exports = app;

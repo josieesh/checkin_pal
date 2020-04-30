@@ -1,0 +1,151 @@
+\c
+\c
+\d
+\dt
+\t
+\t
+create database checkin_pal
+\c
+\l
+create database checkin_pal;
+create database checkin_pal;
+\l
+;
+create user app PASSWORD 'password';
+roles;
+\r;
+select rolname from pg_roles;
+drop role app;
+select rolname from pg_roles;
+create user checkin_pal_app PASSWORD 'password';
+select rolname from pg_roles;
+grant all privileges on database checkin_pal to checkin_pal_app ;
+\d checkin_pal
+\c checkin_pal;
+\dt;
+\dt
+\t
+\t
+dt
+\dt
+\du;
+\q
+\c
+\l
+\c checkin_pal
+\dt
+\d user
+\d locations;
+\d location;
+select * from location;
+select * from user;
+select * from 'user';
+select * from `user`;
+select * from "user";
+truncate table "users";
+truncate "user";
+truncate "user" CASCADE;
+select * from "user";
+truncate "location" CASCADE;
+select * from location
+;
+select * from users;
+select * from "user";
+select * from location;
+select * from location;
+select * from location;
+select * from "user";
+select * from location;
+select * from "user";
+select * from "user";
+select * from "user";
+\q
+\c checkin_pal
+select * from "user";
+delete from "user" where sin=123456789;
+select * from "user";
+select * from "user";
+delete from "user" where sin=123456789;
+select * from "user";
+select * from "user";
+delete from "user" where sin=123456789;
+select * from "user";
+delete from "user" where sin=123456789;
+delete from "user" where sin=123456789;
+delete from "user" where sin=123456789;
+delete from "user" where sin=123456789;
+delete from "user" where sin=123456789;
+delete from "user" where sin=123456789;
+delete from "user" where sin=123456789;
+delete from "user" where sin=123456789;
+\d location;
+\d location;
+select * from location;
+insert into location (latitude, longitude) values (-145.067183,-103.410897);
+insert into location (latitude, longitude,createdAt,updatedAt) values (-145.067183,-103.410897,2020-04-27 19:08:53.12-04,2020-04-27 19:08:53.12-04);
+insert into location (latitude, longitude,createdAt,updatedAt) values (-145.067183,-103.410897,'2020-04-27 19:08:53.12-04','2020-04-27 19:08:53.12-04');
+insert into location (latitude, longitude,createdAt,updatedAt) values (-145.067183,-103.410897,'2020-04-27 19:08:53.12-04','2020-04-27 19:08:53.12-04');
+insert into location (latitude, longitude,"createdAt","updatedAt") values (-145.067183,-103.410897,'2020-04-27 19:08:53.12-04','2020-04-27 19:08:53.12-04');
+select * from location;
+delete from location where latitude is Null
+;
+select * from location;
+insert into location (latitude, longitude,"createdAt","updatedAt") values (-145.067183,-103.4127,'2020-04-27 19:08:53.12-04','2020-04-27 19:08:53.12-04');
+select * from location;
+select * from user_location;
+\d user_location;
+\d location;
+\d user_location;
+drop table user_location;
+\d user_location;
+\d user_location;
+create table user_location (
+id SERIAL PRIMARY KEY,
+userId INTEGER REFERENCES checkin_pal."user"(id),
+locationId INTEGER REFERENCES location(id),
+Timestamp timestamp with time zone);
+create table user_location (
+id SERIAL PRIMARY KEY,
+userId INTEGER REFERENCES "user"(id),
+locationId INTEGER REFERENCES location(id),
+Timestamp timestamp with time zone);
+\d user_location;
+select userId from user_location;
+INSERT INTO "user_location" ("userId","locationId") VALUES (1,2);
+INSERT INTO "user_location" ("userid","locationid") VALUES (1,2);
+ALTER TABLE user_location 
+RENAME COLUMN “userid” TO “userId”;
+\d user_location;
+ALTER TABLE user_location 
+RENAME COLUMN "userid" TO "userId";
+\d user_location;
+ALTER TABLE user_location 
+RENAME COLUMN "locationid" TO "locationId";
+\d user_location;
+\z user_location;
+\z 
+\z "user";
+select * from "user";
+select * from location;
+INSERT INTO "user_location" ("userId","locationId") VALUES (8,4);
+select * from user_location;
+GRANT ALL PRIVILEGES ON TABLE user_location TO checkin_pal_app;
+select * from user_location;
+\d user_location;
+GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA checkin_pal TO checkin_pal_app;
+GRANT USAGE, SELECT ON ALL SEQUENCES TO checkin_pal_app;
+GRANT USAGE, SELECT ON SEQUENCE user_location_id_seq TO checkin_pal_app;
+select * from user_location;
+alter table user_location alter column "userId" set not null;
+delete from user_location where userId is null;
+delete from user_location where "userId" is null;
+alter table user_location alter column "userId" set not null;
+alter table user_location alter column "locationId" set not null;
+delete from user_location where 
+"timestamp" is null;
+alter table user_location alter column "timestampe" set not null;
+alter table user_location alter column "timestamp" set not nu
+select * from user_locaiton
+;
+select * from user_location;
+\s user_location

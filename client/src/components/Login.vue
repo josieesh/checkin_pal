@@ -2,10 +2,14 @@
     <div>    
         <h2>Login</h2>    
         <form v-on:submit="login">    
-            <input type="text" v-model="user.username" name="username" /><br>    
-            <input type="password" v-model="user.password" name="password" /><br>    
+            <input type="text" v-model="user.username" name="username" placeholder="Username" /><br>    
+            <input type="password" v-model="user.password" name="password" placeholder="Password"/><br>    
             <input type="submit" value="Login" />    
-        </form>    
+        </form>  
+        <p>
+          No account?
+        <router-link to="/register" tag="button">Register</router-link>
+        </p>
     </div>
 </template>
 
