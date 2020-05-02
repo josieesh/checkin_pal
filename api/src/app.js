@@ -8,6 +8,7 @@ const User = require("../data_access/models")["user"];
 const Location = require("../data_access/models")["location"];
 const UserLocation = require("../data_access/models")["user_location"];
 const Sequelize = require("sequelize");
+const db = require('../data_access/models')
 const bodyParser = require('body-parser');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
@@ -37,9 +38,9 @@ app.use(cors({
 app.use(session({
   secret: process.env.SECRET,
   // create new redis store.
-  store: new redisStore({ host: 'localhost', port: 6379, client: redisClient, ttl :  260}),
+  store: new redisStore({ host: 'localhost', port: 6379, client: redisClient, ttl : 600}),
   saveUninitialized: false,
-  resave: false
+  resave: true
 }));
 
 
@@ -48,6 +49,44 @@ app.use(session({
 /* *************
 **** ROUTES ****
 ***************/
+
+app.get('/places/:uuid', auth.checkSession, async function(req,res) {
+  db.sequelize.query(
+    "SELECT \"latitude\", \"longitude\", \"address\", \"capacity\", COUNT(*) AS persons FROM user_location \
+    INNER JOIN \
+    ( \
+      SELECT \"userId\", MAX(timestamp) AS timestamp \
+      FROM user_location \
+      GROUP BY \"userId\" \
+    ) AS grouped \
+    ON user_location.\"userId\" = grouped.\"userId\" AND user_location.timestamp = grouped.timestamp \
+    INNER JOIN \
+    location ON location.id = user_location.\"locationId\" \
+    WHERE \"_uuid\"=? \
+    GROUP BY \"latitude\", \"longitude\", \"address\", capacity",
+    {
+      replacements: [req.params.uuid]
+    }
+  ).then(function([results, metadata]) {
+    // Should only ever return one result really unless location does not exist
+    if (results.length == 0) {
+      res.status(404).send("Location not found")
+    }
+    else {
+      result = results[0]
+      res.status(200).json({
+        address: result.address,
+        lng: result.longitude,
+        lat: result.latitude,
+        persons: result.persons,
+        capacity: result.capacity
+      })
+    }
+  }).catch(function(err) {
+    console.log(err)
+    res.status(500).send("Something went wrong.")
+  });
+})
 
 // check that a given JWtoken is valid (for client auth)
 app.get('/checkToken', auth.withAuth, function(req, res) {
@@ -67,6 +106,7 @@ app.get('/places', auth.checkSession, async function(req, res) {
   var response = []
   places.forEach(place => {
     response.push({
+      uuid: place.location._uuid,
       timestamp: place.timestamp,
       latitude: place.location.latitude,
       longitude: place.location.longitude,

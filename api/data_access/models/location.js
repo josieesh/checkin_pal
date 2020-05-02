@@ -4,7 +4,8 @@ module.exports = (sequelize, DataTypes) => {
     latitude: DataTypes.DECIMAL(6,3),
     longitude: DataTypes.DECIMAL(6,3),
     address: DataTypes.STRING,
-    capacity: DataTypes.INTEGER
+    capacity: DataTypes.INTEGER,
+    _uuid: DataTypes.UUID
   }, {
     freezeTableName: true,
   });
